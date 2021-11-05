@@ -1,9 +1,14 @@
 import {
+  fill_result,
   get_last_error,
+  get_result_len,
   sqlite3_execute,
-  sqlite3_open,
+  deno_sqlite3_open,
   sqlite3_open_memory,
+  sqlite3_query,
+  Value,
 } from "./bindings/bindings.ts";
+import { fromValue, intoValue } from "./value.ts";
 
 const CONNECTION_IDS: Connection[] = [];
 
@@ -40,10 +45,25 @@ export class Connection {
     if (specifier == ":memory:") {
       return sqlite3_open_memory(this.id);
     }
-    return sqlite3_open(this.id, specifier);
+    return deno_sqlite3_open(this.id, specifier);
   }
 
   async execute(stmt: string, params: any[] = []) {
-    await exec(() => sqlite3_execute(this.id, { stmt, params }));
+    params = params.map((p) => intoValue(p));
+    await exec(() => sqlite3_execute(this.id, stmt, { params }));
+  }
+
+  async query(stmt: string, params: any[] = []) {
+    params = params.map((p) => intoValue(p));
+    await exec(() => sqlite3_query(this.id, stmt, { params }));
+
+    const len = get_result_len();
+    const result_buf = new Uint8Array(len);
+    fill_result(result_buf);
+    const result = decode(result_buf);
+    return JSON.parse(result).map((r: Value[]) =>
+      r.map((v: Value) => fromValue(v))
+    );
   }
 }
+
