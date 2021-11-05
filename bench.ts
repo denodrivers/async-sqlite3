@@ -1,6 +1,6 @@
 import { bench, runBenchmarks } from "https://deno.land/std@0.113.0/testing/bench.ts";
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
-import { Connection, encodeValues } from "./connection.ts";
+import { Connection } from "./connection.ts";
 
 const LARGE_TEXT = "SAMPLE".repeat(10000);
 
@@ -69,25 +69,6 @@ bench({
 
  
 }
-
-bench({
-  name: "encode_values#test",
-  async func(b) {
-    b.start();
-    const _a = encodeValues([LARGE_TEXT, 10]);
-    b.stop();
-  }
-})
-
-bench({
-  name: "encode_value_json#test",
-  async func(b) {
-    b.start();
-const _b = JSON.stringify([LARGE_TEXT, 10]);
-    b.stop();
-  }
-})
-
 
 runBenchmarks();
 
