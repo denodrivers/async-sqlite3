@@ -5,19 +5,19 @@
     "specifier": "bench.db",
     "setupJobs": [
       {
-        "type": "execution",
+        "type": "query",
         "text": "pragma journal_mode = WAL;"
       },
       {
-        "type": "execution",
+        "type": "query",
         "text": "pragma synchronous = normal;"
       },
       {
-        "type": "execution",
+        "type": "query",
         "text": "pragma temp_store = memory;"
       },
       {
-        "type": "execution",
+        "type": "order",
         "text": "CREATE TABLE IF NOT EXISTS users (name TEXT NOT NULL)"
       }
     ],

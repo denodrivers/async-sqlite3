@@ -1,4 +1,4 @@
-import type { Job } from "./types.ts";
+import type { Workflow, Job} from "./types.ts";
 import { Connection } from "../connection.ts";
 
 async function performJobs(conn: Connection, jobs: Job[]) {

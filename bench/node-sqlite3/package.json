@@ -1,6 +1,6 @@
 {
   "private": true,
-  "main": "./index.js",
+  "main": "./index",
   "scripts": {
     "start": "node ./index"
   },

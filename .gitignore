@@ -4,3 +4,4 @@ Cargo.lock
 *.db-wal
 *.db-shm
 node_modules
+*.sql*
