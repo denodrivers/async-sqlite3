@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "main": "./index.js",
+  "scripts": {
+    "start": "node ./index"
+  },
+  "dependencies": {
+    "sqlite3": "^5.0.2"
+  }
+}

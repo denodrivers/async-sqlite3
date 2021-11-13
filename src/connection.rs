@@ -56,18 +56,7 @@ pub fn get_last_error(buf: &mut [u8]) {
 #[deno_bindgen(non_blocking)]
 pub fn deno_sqlite3_open(id: usize, path: &str) -> isize {
     exec(move || {
-        let conn = Connection::open(path)?;
-        let initial_pragmas = "
-        -- enable write-ahead-logging mode
-        PRAGMA journal_mode=WAL;
-        PRAGMA temp_store=memory;
-        PRAGMA page_size=4096;
-        PRAGMA mmap_size=6000000;
-        PRAGMA optimize;
-      ";
-
-      conn.execute_batch(initial_pragmas)?;
-      conn.set_prepared_statement_cache_capacity(128);
+        let conn = Connection::open(path)?; 
         let conn = Arc::new(Mutex::new(conn));
         let prev = HANDLE.lock().unwrap().insert(id, conn);
         if prev.is_some() {

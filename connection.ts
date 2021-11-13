@@ -1,9 +1,9 @@
 import {
+  deno_sqlite3_open,
   fill_result,
   get_last_error,
   get_result_len,
   sqlite3_execute,
-  deno_sqlite3_open,
   sqlite3_open_memory,
   sqlite3_query,
   Value,
@@ -66,4 +66,3 @@ export class Connection {
     );
   }
 }
-
