@@ -12,14 +12,12 @@ async function performJobs(conn: Connection, jobs: Job[]) {
 }
 
 export async function performWorkflow(workflow: Workflow) {
-  const start = performance.now();
-
   const conn = new Connection();
-
-  await conn.open(":memory:");
+  await conn.open(workflow.specifier);
 
   await performJobs(conn, workflow.setupJobs);
 
+  const start = performance.now();
   for (let i = 0; i < workflow.iterations; i++) {
     await performJobs(conn, workflow.jobs);
   }

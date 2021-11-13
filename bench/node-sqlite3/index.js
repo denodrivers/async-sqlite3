@@ -13,21 +13,24 @@ function performJobs(db, jobs) {
 }
 
 async function performWorkflow(workflow) {
-  const start = performance.now();
 
-  const db = new sqlite.Database(":memory:");
-
-  await new Promise((resolve) =>
-    db.serialize(async () => {
+  const db = new sqlite.Database(workflow.specifier);
+  
+    const start = await new Promise((resolve) => {
+    db.serialize(() => {
       performJobs(db, workflow.setupJobs);
-
+    })
+    
+    const start = performance.now();
+    db.serialize(async () => {
       for (let i = 0; i < workflow.iterations; i++) {
         performJobs(db, workflow.jobs);
       }
 
-      resolve();
-    })
-  );
+    });
+
+    db.close(() => resolve(start))
+  });
 
   return performance.now() - start;
 }

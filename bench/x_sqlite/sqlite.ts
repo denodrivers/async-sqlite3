@@ -8,11 +8,11 @@ function performJobs(db: DB, jobs: Job[]) {
 }
 
 export function performWorkflow(workflow: Workflow) {
-  const start = performance.now();
-  const db = new DB(":memory:");
+  const db = new DB(workflow.specifier);
 
   performJobs(db, workflow.setupJobs);
 
+  const start = performance.now();
   for (let i = 0; i < workflow.iterations; i++) {
     performJobs(db, workflow.jobs);
   }
@@ -21,7 +21,7 @@ export function performWorkflow(workflow: Workflow) {
 }
 
 const workflows: Workflow[] = JSON.parse(
-  Deno.readTextFileSync("./workflows.json"),
+  Deno.readTextFileSync("../workflows.json"),
 );
 
 console.log("sqlite");

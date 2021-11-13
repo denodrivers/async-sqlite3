@@ -8,6 +8,7 @@ export interface Workflow {
   name: string;
   memory: boolean;
   iterations: number;
+  specifier: string;
   setupJobs: Job[];
   jobs: Job[];
 }

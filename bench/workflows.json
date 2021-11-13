@@ -1,11 +1,24 @@
 [
   {
-    "name": "insert 10000 rows in memory",
-    "iterations": 10000,
+    "name": "insert 100 rows in bench.db",
+    "iterations": 100,
+    "specifier": "bench.db",
     "setupJobs": [
       {
         "type": "execution",
-        "text": "CREATE TABLE users (name TEXT NOT NULL)"
+        "text": "pragma journal_mode = WAL;"
+      },
+      {
+        "type": "execution",
+        "text": "pragma synchronous = normal;"
+      },
+      {
+        "type": "execution",
+        "text": "pragma temp_store = memory;"
+      },
+      {
+        "type": "execution",
+        "text": "CREATE TABLE IF NOT EXISTS users (name TEXT NOT NULL)"
       }
     ],
     "jobs": [
