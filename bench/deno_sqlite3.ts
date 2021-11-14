@@ -1,4 +1,4 @@
-import type { Workflow, Job} from "./types.ts";
+import type { Job, Workflow } from "./types.ts";
 import { Connection } from "../connection.ts";
 
 async function performJobs(conn: Connection, jobs: Job[]) {
@@ -22,6 +22,7 @@ export async function performWorkflow(workflow: Workflow) {
     await performJobs(conn, workflow.jobs);
   }
 
+  await conn.close();
   return performance.now() - start;
 }
 

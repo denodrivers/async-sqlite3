@@ -1,4 +1,4 @@
-import type { Job } from "./types.ts";
+import type { Job, Workflow } from "./types.ts";
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
 function performJobs(db: DB, jobs: Job[]) {
@@ -17,6 +17,7 @@ export function performWorkflow(workflow: Workflow) {
     performJobs(db, workflow.jobs);
   }
 
+  db.close();
   return performance.now() - start;
 }
 

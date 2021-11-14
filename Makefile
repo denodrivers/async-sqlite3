@@ -3,3 +3,4 @@ test:
 
 fmt:
 	deno fmt --ignore=target/,bench/node-sqlite3/
+	cargo fmt

@@ -1,9 +1,11 @@
 import {
+  deno_sqlite3_close,
   deno_sqlite3_open,
   fill_result,
   get_last_error,
   get_result_len,
   sqlite3_execute,
+  sqlite3_execute_sync,
   sqlite3_open_memory,
   sqlite3_query,
   Value,
@@ -17,7 +19,7 @@ const decode =
   Deno.core?.decode ||
   (new TextDecoder()).decode;
 
-async function exec(f: () => Promise<number>) {
+async function exec(f: () => Promise<number> | number) {
   const err_len = await f();
   if (err_len !== -1) {
     const err_slice = new Uint8Array(err_len);
@@ -46,6 +48,11 @@ export class Connection {
       return sqlite3_open_memory(this.id);
     }
     return deno_sqlite3_open(this.id, specifier);
+  }
+
+  close() {
+    exec(() => deno_sqlite3_close(this.id));
+    this.#_id = null;
   }
 
   async execute(stmt: string, params: any[] = []) {
