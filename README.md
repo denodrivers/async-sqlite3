@@ -31,7 +31,12 @@ sqlite
 
 node-sqlite3
   insert 100 rows in bench.db: 387.2132ms
+
+python-sqlite3
+  insert 100 rows in bench.db: 100.1968ms
 ```
+
+Measured on an Intel i7-4510U (4) @ 3.1 HDD
 
 ## License
 

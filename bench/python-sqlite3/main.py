@@ -19,6 +19,7 @@ def perform_workflow(workflow):
     for _ in range(workflow['iterations']):
       perform_jobs(conn, workflow['jobs'])
     
+    conn.close()
     return time.time() * 1000 - start
 
 file = open("../workflows.json")
