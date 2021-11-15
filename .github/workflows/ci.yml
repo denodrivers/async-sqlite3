@@ -44,7 +44,7 @@ jobs:
         shell: bash
         if: startsWith(matrix.os, 'ubuntu')
         working-directory: bench
-        run: echo -e "```" | tee bench.md && make | tee -a bench.md && echo -e "```" | tee bench.md
+        run: echo -e "```" | tee bench.md && make | tee -a bench.md && echo -e "```" | tee -a bench.md
 
       - name: Get Pull Request
         uses: jwalton/gh-find-current-pr@v1
