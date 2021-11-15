@@ -44,22 +44,7 @@ jobs:
         shell: bash
         if: startsWith(matrix.os, 'ubuntu')
         working-directory: bench
-        run: make >> bench.md
-
-      - name: Get Pull Request
-        uses: jwalton/gh-find-current-pr@v1
-        if: startsWith(matrix.os, 'ubuntu')
-        id: finder
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Comment Benchmarks
-        uses: marocchino/sticky-pull-request-comment@v1
-        if: startsWith(matrix.os, 'ubuntu')
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          number: ${{ steps.finder.outputs.pr }}
-          path: bench/bench.md
+        run: make
 
       - name: Release
         uses: softprops/action-gh-release@master
