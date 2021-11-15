@@ -58,10 +58,8 @@ pub fn deno_sqlite3_open(id: usize, path: &str) -> isize {
   exec(move || {
     let conn = Connection::open(path)?;
     let conn = Arc::new(Mutex::new(conn));
-    let prev = HANDLE.lock().unwrap().insert(id, conn);
-    if prev.is_some() {
-      return Err(anyhow::anyhow!("Failed to insert connection handle."));
-    }
+
+    HANDLE.lock().unwrap().insert(id, conn);
     Ok(())
   })
 }
@@ -84,11 +82,8 @@ pub fn deno_sqlite3_close(id: usize) -> isize {
 pub fn sqlite3_open_memory(id: usize) -> isize {
   exec(move || {
     let conn = Arc::new(Mutex::new(Connection::open_in_memory()?));
-    let prev = HANDLE.lock().unwrap().insert(id, conn);
-    if prev.is_some() {
-      return Err(anyhow::anyhow!("Failed to insert connection handle."));
-    }
 
+    HANDLE.lock().unwrap().insert(id, conn);
     Ok(())
   })
 }
