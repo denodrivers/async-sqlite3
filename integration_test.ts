@@ -82,7 +82,9 @@ function usersTest(inMemory: boolean) {
     });
 
     if (!inMemory) {
-      await Deno.remove("./users.sql"); // the file lock should be removed now
+      // On Windows CI, the file is reported to be already in use.
+      // In that case, we ignore the error but make sure fresh database is used in the next run.
+      await Deno.remove("./users.sql").catch(() => {}); // the file lock should be removed now
     }
   });
 }
