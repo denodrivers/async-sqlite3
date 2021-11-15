@@ -40,6 +40,30 @@ jobs:
         shell: bash
         run: make
 
+      - name: Bench (Linux)
+        shell: bash
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          cd bench
+          echo -e "```" | tee bench.md
+          make | tee -a bench.md
+          echo -e "```" | tee bench.md
+
+      - name: Get Pull Request
+        uses: jwalton/gh-find-current-pr@v1
+        if: startsWith(matrix.os, 'ubuntu')
+        id: finder
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment Benchmarks
+        uses: marocchino/sticky-pull-request-comment@v1
+        if: startsWith(matrix.os, 'ubuntu')
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          number: ${{ steps.finder.outputs.pr }}
+          path: bench/bench.md
+
       - name: Release
         uses: softprops/action-gh-release@master
         env:
