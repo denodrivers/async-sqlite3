@@ -1,7 +1,7 @@
 [
   {
-    "name": "insert 1000 rows in bench.db",
-    "iterations": 1000,
+    "name": "insert 10000 rows in bench.db",
+    "iterations": 10000,
     "specifier": "bench.db",
     "setupJobs": [
       {
