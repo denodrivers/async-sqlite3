@@ -1,5 +1,5 @@
-import type { Job, Workflow } from "./types.ts";
-import { DB } from "https://deno.land/x/sqlite/mod.ts";
+import type { Job, Workflow } from "../types.ts";
+import { DB } from "https://deno.land/x/sqlite@v3.1.3/mod.ts";
 
 function performJobs(db: DB, jobs: Job[]) {
   for (const job of jobs) {

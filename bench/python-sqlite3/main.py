@@ -18,7 +18,7 @@ def perform_workflow(workflow):
     
     for _ in range(workflow['iterations']):
       perform_jobs(conn, workflow['jobs'])
-    
+    conn.commit()
     conn.close()
     return time.time() * 1000 - start
 
