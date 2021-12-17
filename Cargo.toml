@@ -12,4 +12,10 @@ serde = { version = "1", features = ["derive"] }
 rusqlite = { version = "0.26.1", features = ["bundled", "modern_sqlite"] }
 lazy_static = "1.4.0"
 anyhow = "1.0.44"
+parking_lot = "0.11"
+r2d2 = "0.8.9"
 
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

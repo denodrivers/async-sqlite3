@@ -31,38 +31,29 @@ async function exec(f: () => Promise<number> | number) {
 }
 
 export class Connection {
-  #_id: number | null = null;
-
-  get id(): number {
-    if (this.#_id == null) throw new TypeError("Connection is closed.");
-    return this.#_id;
-  }
-
   async open(path: string) {
-    this.#_id = CONNECTION_IDS.push(this);
     await exec(() => this.#open(path));
   }
 
   #open(specifier: string) {
     if (specifier == ":memory:") {
-      return sqlite3_open_memory(this.id);
+      return sqlite3_open_memory();
     }
-    return deno_sqlite3_open(this.id, specifier);
+    return deno_sqlite3_open(specifier);
   }
 
   close() {
-    exec(() => deno_sqlite3_close(this.id));
-    this.#_id = null;
+    exec(() => deno_sqlite3_close());
   }
 
   async execute(stmt: string, params: any[] = []) {
     params = params.map((p) => intoValue(p));
-    await exec(() => sqlite3_execute(this.id, stmt, { params }));
+    await exec(() => sqlite3_execute(stmt, { params }));
   }
 
   async query(stmt: string, params: any[] = []) {
     params = params.map((p) => intoValue(p));
-    await exec(() => sqlite3_query(this.id, stmt, { params }));
+    await exec(() => sqlite3_query(stmt, { params }));
 
     const len = get_result_len();
     const result_buf = new Uint8Array(len);

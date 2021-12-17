@@ -4,11 +4,13 @@ use rusqlite::Connection;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::Mutex;
-
+use parking_lot::Mutex;
+use crate::pool::ConnectionPool;
+use crate::pool::Specifier;
+use r2d2::Pool;
+ 
 lazy_static! {
-  pub static ref HANDLE: Arc<Mutex<HashMap<usize, Arc<Mutex<Connection>>>>> =
-    Arc::new(Mutex::new(HashMap::new()));
+  pub static ref HANDLE: Mutex<Option<Pool<ConnectionPool>>> = Mutex::new(None);
   pub static ref LAST_ERROR: Mutex<Vec<u8>> = Mutex::new(Vec::new());
   pub static ref LAST_RESULT: Mutex<Vec<u8>> = Mutex::new(Vec::new());
 }
@@ -32,7 +34,7 @@ where
     Err(e) => {
       let err = e.to_string().into_bytes();
       let len = err.len();
-      *LAST_ERROR.lock().unwrap() = err;
+      *LAST_ERROR.lock() = err;
       len as isize
     }
   }
@@ -40,54 +42,50 @@ where
 
 #[deno_bindgen]
 pub fn get_result_len() -> usize {
-  LAST_RESULT.lock().unwrap().len()
+  LAST_RESULT.lock().len()
 }
 
 #[deno_bindgen]
 pub fn fill_result(buf: &mut [u8]) {
-  buf.swap_with_slice(&mut *LAST_RESULT.lock().unwrap());
+  buf.swap_with_slice(&mut *LAST_RESULT.lock());
 }
 
 #[deno_bindgen]
 pub fn get_last_error(buf: &mut [u8]) {
-  buf.swap_with_slice(&mut *LAST_ERROR.lock().unwrap());
+  buf.swap_with_slice(&mut *LAST_ERROR.lock());
 }
 
 #[deno_bindgen(non_blocking)]
-pub fn deno_sqlite3_open(id: usize, path: &str) -> isize {
+pub fn deno_sqlite3_open(path: &str) -> isize {
   exec(move || {
-    let conn = Connection::open(path)?;
-    let conn = Arc::new(Mutex::new(conn));
+    let manager = ConnectionPool::new(Specifier::Path(path.to_string()));
+    let pool = Pool::builder().build(manager).unwrap();
 
-    HANDLE.lock().unwrap().insert(id, conn);
+    *HANDLE.lock() = Some(pool);
     Ok(())
   })
 }
 
 #[deno_bindgen(non_blocking)]
-pub fn deno_sqlite3_close(id: usize) -> isize {
+pub fn deno_sqlite3_close() -> isize {
   exec(move || {
-    let mut mutex_conn = HANDLE.lock().unwrap();
-    let mutex_conn = mutex_conn
-      .remove(&id)
-      .ok_or(anyhow::anyhow!("Connection does not exist"))?;
-
-    let conn = mutex_conn.lock().unwrap();
-    drop(conn);
+    *HANDLE.lock() = None;
     Ok(())
   })
 }
 
 #[deno_bindgen(non_blocking)]
-pub fn sqlite3_open_memory(id: usize) -> isize {
+pub fn sqlite3_open_memory() -> isize {
   exec(move || {
-    let conn = Arc::new(Mutex::new(Connection::open_in_memory()?));
-
-    HANDLE.lock().unwrap().insert(id, conn);
+    let manager = ConnectionPool::new(Specifier::InMemory);
+    let pool = Pool::builder().build(manager).unwrap();
+    let conn = pool.get().unwrap();
+    conn.set_prepared_statement_cache_capacity(1024);
+    *HANDLE.lock() = Some(pool);
     Ok(())
   })
 }
-
+ 
 use rusqlite::types::ValueRef;
 impl From<ValueRef<'_>> for Value {
   fn from(value: ValueRef<'_>) -> Value {
@@ -118,48 +116,48 @@ pub struct ExecuteParams {
 }
 
 #[deno_bindgen(non_blocking)]
-pub fn sqlite3_execute(id: usize, stmt: &str, params: ExecuteParams) -> isize {
+pub fn sqlite3_execute(stmt: &str, params: ExecuteParams) -> isize {
   exec(move || {
-    let mutex_conn = HANDLE.lock().unwrap();
-    let mutex_conn = mutex_conn
-      .get(&id)
-      .ok_or(anyhow::anyhow!("Connection does not exist"))?;
+    let lock = HANDLE.lock();
+    let pool = lock.as_ref().ok_or(anyhow::anyhow!("Connection does not exist"))?;
 
-    let conn = mutex_conn.lock().unwrap();
+    let conn = pool.get().unwrap();
+
     let mut stmt = conn.prepare_cached(stmt)?;
     let params: Vec<rusqlite::types::Value> =
-      params.params.iter().map(|p| from(p)).collect();
+    params.params.iter().map(|p| from(p)).collect();
     stmt.execute(rusqlite::params_from_iter(params))?;
+    
     Ok(())
   })
 }
 
 #[deno_bindgen(non_blocking)]
-pub fn sqlite3_query(id: usize, stmt: &str, params: ExecuteParams) -> isize {
+pub fn sqlite3_query(stmt: &str, params: ExecuteParams) -> isize {
   exec(move || {
-    let mutex_conn = HANDLE.lock().unwrap();
-    let mutex_conn = mutex_conn
-      .get(&id)
-      .ok_or(anyhow::anyhow!("Connection does not exist"))?;
+    // let mutex_conn = HANDLE.lock();
+    // let mutex_conn = mutex_conn
+    //   .get(&id)
+    //   .ok_or(anyhow::anyhow!("Connection does not exist"))?;
 
-    let conn = mutex_conn.lock().unwrap();
-    let mut stmt = conn.prepare_cached(stmt)?;
-    let params: Vec<rusqlite::types::Value> =
-      params.params.iter().map(|p| from(p)).collect();
+    // let conn = mutex_conn.lock();
+    // let mut stmt = conn.prepare_cached(stmt)?;
+    // let params: Vec<rusqlite::types::Value> =
+    //   params.params.iter().map(|p| from(p)).collect();
 
-    let mut rows = stmt.query(rusqlite::params_from_iter(params))?;
-    let mut result: Vec<Vec<Value>> = vec![];
-    while let Some(row) = rows.next()? {
-      let columns = row.as_ref().column_count();
-      let row: Vec<Value> = (0..columns)
-        .map(|idx| Value::from(row.get_ref_unwrap(idx)))
-        .collect();
+    // let mut rows = stmt.query(rusqlite::params_from_iter(params))?;
+    // let mut result: Vec<Vec<Value>> = vec![];
+    // while let Some(row) = rows.next()? {
+    //   let columns = row.as_ref().column_count();
+    //   let row: Vec<Value> = (0..columns)
+    //     .map(|idx| Value::from(row.get_ref_unwrap(idx)))
+    //     .collect();
 
-      result.push(row);
-    }
+    //   result.push(row);
+    // }
 
-    let encoded = deno_bindgen::serde_json::to_vec(&result)?;
-    *LAST_RESULT.lock().unwrap() = encoded;
+    // let encoded = deno_bindgen::serde_json::to_vec(&result)?;
+    // *LAST_RESULT.lock() = encoded;
 
     Ok(())
   })
