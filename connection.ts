@@ -10,14 +10,9 @@ import {
   sqlite3_query,
   Value,
 } from "./bindings/bindings.ts";
-import { fromValue, intoValue } from "./value.ts";
+import { decodeArray, encode, fromValue, intoValue } from "./value.ts";
 
 const CONNECTION_IDS: Connection[] = [];
-
-const decode =
-  // @ts-ignore
-  Deno.core?.decode ||
-  (new TextDecoder()).decode;
 
 async function exec(f: () => Promise<number> | number) {
   const err_len = await f();
@@ -56,20 +51,20 @@ export class Connection {
   }
 
   async execute(stmt: string, params: any[] = []) {
-    params = params.map((p) => intoValue(p));
-    await exec(() => sqlite3_execute(this.id, stmt, { params }));
+    const u8 = encode(params);
+    await exec(() => sqlite3_execute(this.id, stmt, u8));
   }
 
   async query(stmt: string, params: any[] = []) {
-    params = params.map((p) => intoValue(p));
-    await exec(() => sqlite3_query(this.id, stmt, { params }));
+    const u8 = encode(params);
+    const resultLen = new Uint8Array(4);
+    const view = new DataView(resultLen.buffer);
+    await exec(() => sqlite3_query(this.id, stmt, u8, resultLen));
 
-    const len = get_result_len();
-    const result_buf = new Uint8Array(len);
-    fill_result(result_buf);
-    const result = decode(result_buf);
-    return JSON.parse(result).map((r: Value[]) =>
-      r.map((v: Value) => fromValue(v))
-    );
+    const len = view.getUint32(0);
+    const resultBuf = new Uint8Array(len);
+    fill_result(resultBuf);
+    const result = decodeArray(resultBuf);
+    return result;
   }
 }

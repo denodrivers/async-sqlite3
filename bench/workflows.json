@@ -7,6 +7,18 @@
       {
         "type": "order",
         "text": "CREATE TABLE IF NOT EXISTS users (name TEXT NOT NULL)"
+      },
+      {
+        "type": "pragma",
+        "text": "pragma journal_mode = WAL;"
+      },
+      {
+        "type": "pragma",
+        "text": "pragma synchronous = normal;"
+      },
+      {
+        "type": "pragma",
+        "text": "pragma temp_store = memory;"
       }
     ],
     "jobs": [
@@ -14,6 +26,19 @@
         "type": "order",
         "text": "INSERT INTO users VALUES (?)",
         "params": ["littledivy"]
+      }
+    ]
+  },
+  {
+    "name": "query 10_000 rows in bench.db",
+    "iterations": 1,
+    "specifier": "bench.db",
+    "setupJobs": [],
+    "jobs": [
+      {
+        "type": "query",
+        "text": "SELECT * FROM users",
+        "params": []
       }
     ]
   }

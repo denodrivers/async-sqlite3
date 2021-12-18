@@ -24,29 +24,31 @@ assertEquals(rows[0 /* First row */][0 /* First column */], "littledivy");
 
 ```
 deno_sqlite3
-  insert 10000 rows in bench.db: 8852.2726ms
+  insert 10_000 rows in bench.db: 1114.5801ms
+  query 10_000 rows in bench.db: 30.3004ms
 
-x/sqlite
-  insert 10000 rows in bench.db: 43125.2081ms
+x/sqlite3
+  insert 10_000 rows in bench.db: 1306.1578ms
+  query 10_000 rows in bench.db: 163.2021ms
 
 node-sqlite3
-  insert 10000 rows in bench.db: 42322.9281ms
+  insert 10_000 rows in bench.db: 1165.0645ms
+  query 10_000 rows in bench.db: 8.1728ms
 
 better-sqlite3
-  insert 10_000 rows in bench.db: 44505.2927ms
+  insert 10_000 rows in bench.db: 592.1117ms
+  query 10_000 rows in bench.db: 11.3483ms
 
 python-sqlite3
-  insert 10000 rows in bench.db: 32438.6240ms
+  insert 10_000 rows in bench.db: 546.4092ms
+  query 10_000 rows in bench.db: 0.4868ms
+
+x/sqlite
+  insert 10_000 rows in bench.db: 28672.3261ms
+  query 10_000 rows in bench.db: 16.8747ms
 ```
 
 Measured on an Intel i7-4510U (4) @ 3.1 SSD
-
-## Building from source
-
-Install `deno_bindgen` CLI
-
-```
-```
 
 ## License
 
