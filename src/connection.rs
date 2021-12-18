@@ -1,17 +1,19 @@
 use deno_bindgen::deno_bindgen;
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use rusqlite::Connection;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-lazy_static! {
-  pub static ref HANDLE: Arc<Mutex<HashMap<usize, Arc<Mutex<Connection>>>>> =
-    Arc::new(Mutex::new(HashMap::new()));
-  pub static ref LAST_ERROR: Mutex<Vec<u8>> = Mutex::new(Vec::new());
-  pub static ref LAST_RESULT: Mutex<Vec<u8>> = Mutex::new(Vec::new());
-}
+pub static HANDLE: Lazy<Arc<Mutex<HashMap<usize, Arc<Mutex<Connection>>>>>> =
+  Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+pub static LAST_ERROR: Lazy<Mutex<Vec<u8>>> =
+  Lazy::new(|| Mutex::new(Vec::new()));
+
+pub static LAST_RESULT: Lazy<Mutex<Vec<u8>>> =
+  Lazy::new(|| Mutex::new(Vec::new()));
 
 #[deno_bindgen]
 #[derive(Serialize)]

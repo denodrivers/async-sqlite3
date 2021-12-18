@@ -1,5 +1,7 @@
 import { Value } from "./bindings/bindings.ts";
 
+const cache = new WeakMap();
+
 export const Null = "null";
 export const Text = (text: string) => {
   return { text: { text } };
@@ -20,7 +22,7 @@ export function fromValue(value: Value): any {
   throw new TypeError("unreachable");
 }
 
-export function intoValue(value: any): Value {
+function _intoValue(value: any): Value {
   if (typeof value == "string") {
     return Text(value);
   }
@@ -48,4 +50,16 @@ export function intoValue(value: any): Value {
   }
 
   throw new TypeError("Type not supported");
+}
+
+export function intoValue(value: any): Value {
+  if (cache.has({ value })) {
+    return cache.get({ value });
+  }
+
+  const ser = _intoValue(value);
+
+  cache.set({ value }, ser);
+
+  return ser;
 }
