@@ -4,10 +4,10 @@ const performance = require("perf_hooks").performance;
 
 function performJobs(db, jobs) {
   for (const job of jobs) {
-    if (job.type === "order") {
+    if (job.type === "order" || job.type === "pragma") {
       db.prepare(job.text).run(...(job.params || []));
-    } else {
-      db.query(job.text, ...(job.params || []));
+    } else if (job.type === "query") {
+      db.prepare(job.text).all(...(job.params || []));
     }
   }
 }

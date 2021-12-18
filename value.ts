@@ -1,65 +1,97 @@
 import { Value } from "./bindings/bindings.ts";
 
 const cache = new WeakMap();
+const decodeCache = new WeakMap();
 
-export const Null = "null";
-export const Text = (text: string) => {
-  return { text: { text } };
-};
-export const Integer = (integer: number) => {
-  return { integer: { integer } };
-};
-export const Real = (real: number) => {
-  return { real: { real } };
-};
-
-export function fromValue(value: Value): any {
-  if (value == Null) return null;
-  if (value.text?.text) return value.text.text;
-  if (value.integer?.integer) return value.integer.integer;
-  if (value.real?.real) return value.real.real;
-
-  throw new TypeError("unreachable");
-}
-
-function _intoValue(value: any): Value {
-  if (typeof value == "string") {
-    return Text(value);
+export function encode(params: any[]): Uint8Array {
+  if (cache.has({ params })) {
+    return cache.get({ params });
   }
+  const len = params.length;
+  const u8 = new Uint8Array(100);
+  const view = new DataView(u8.buffer);
 
-  if (typeof value == "number") {
-    if (Number.isInteger(value)) {
-      return Integer(value);
-    } else {
-      return Real(value);
+  view.setUint8(0, len);
+  let offset = 1;
+
+  for (let i = 0; i < len; i++) {
+    if (params[i] == null) {
+      view.setUint8(offset, 0x00);
     }
+    if (typeof params[i] == "string") {
+      view.setUint8(offset, 0x03);
+
+      // @ts-ignore
+      const b = Deno.core.encode(params[i]);
+
+      view.setUint32(offset + 1, b.byteLength);
+      u8.set(b, offset + 1 + 4);
+      offset += b.byteLength + 1;
+    }
+    if (typeof params[i] == "number") {
+      if (Number.isInteger(params[i])) {
+        view.setUint8(offset, 0x01);
+      }
+    }
+
+    offset++;
   }
 
-  if (typeof value == "boolean") {
-    return Integer(value ? 1 : 0);
-  }
-
-  if (value === null) return Null;
-
-  if (value instanceof RegExp) {
-    return Text(value.toString());
-  }
-
-  if (value instanceof Date) {
-    return Real(value.getTime());
-  }
-
-  throw new TypeError("Type not supported");
+  cache.set({ params }, u8);
+  return u8;
 }
 
-export function intoValue(value: any): Value {
-  if (cache.has({ value })) {
-    return cache.get({ value });
+const decode =
+  // @ts-ignore
+  Deno.core?.decode ||
+  (new TextDecoder()).decode;
+
+export function decodeArray(encoded: Uint8Array): any[][] {
+  if (cache.has(encoded)) {
+    return cache.get(encoded);
   }
 
-  const ser = _intoValue(value);
+  const rows = [];
+  const view = new DataView(encoded.buffer);
+  let offset = 0;
+  while (true) {
+    if (offset >= encoded.byteLength) break;
 
-  cache.set({ value }, ser);
+    const entry = [];
+    const len = view.getUint32(offset);
+    offset += 4;
 
-  return ser;
+    const row = encoded.slice(offset, offset + len);
+    offset += len;
+    const rowView = new DataView(row.buffer);
+    let rowOffset = 0;
+    while (rowOffset < row.byteLength) {
+      const type = row[rowOffset];
+
+      rowOffset++;
+      if (type == 0x00) {
+        entry.push(null);
+      }
+      if (type == 0x01) {
+        entry.push(rowView.getInt32(rowOffset));
+        rowOffset += 4;
+      }
+      if (type == 0x02) {
+        entry.push(rowView.getFloat64(rowOffset));
+        rowOffset += 8;
+      }
+      if (type == 0x03) {
+        const len = rowView.getUint32(rowOffset);
+        rowOffset += 4;
+        entry.push(decode(row.slice(rowOffset, rowOffset + len)));
+        rowOffset += len;
+      }
+    }
+
+    rows.push(entry);
+  }
+
+  decodeCache.set(encoded, rows);
+
+  return rows;
 }

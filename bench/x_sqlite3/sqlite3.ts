@@ -1,9 +1,13 @@
 import type { Job, Workflow } from "../types.ts";
-import { Database } from "https://deno.land/x/sqlite3@0.2.1/mod.ts";
+import { Database } from "https://deno.land/x/sqlite3@0.2.2/mod.ts";
 
 function performJobs(db: DB, jobs: Job[]) {
   for (const job of jobs) {
-    db.execute(job.text, ...(job.params || []));
+    if (job.type === "order") {
+      db.execute(job.text, ...(job.params || []));
+    } else {
+      db.queryArray(job.text, ...(job.params || []));
+    }
   }
 }
 

@@ -5,3 +5,4 @@ Cargo.lock
 *.db-shm
 node_modules
 *.sql*
+bindings.json
